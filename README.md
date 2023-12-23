@@ -16,8 +16,6 @@ from pyside_setup_macro import QtBuildPackage
 
 setup(
     ...,
-    packages=find_packages(exclude=("test*", "tests*")),
-    ...,
     cmdclass={
         "build_py": QtBuildPackage,  # This is all you need to add.
     },
@@ -25,10 +23,10 @@ setup(
 ```
 
 
-If your lazy like me and don't want to maintain a qresource file then I have introduced qmacro.
+If your lazy like me and don't want to maintain a qresource file then I have introduced `qmacro`.
 
-The qmacro has 2 parts. 
-A mandatory name of the qresource file to ge created.
+The `qmacro` has 2 parts. 
+A mandatory name of the qresource file to be created.
 ```python
 name="resource"  # Name of resource file to be created.
 ```
@@ -94,3 +92,10 @@ walk()
    </qresource>
 </RCC>
 ```
+
+
+## Examples
+Example apps that use `PySideSetupMacro`.
+* [email app](examples/email_app/)
+* [scandinavian flag picker](examples/scandinavian_flag_picker/)
+* [ui file app](examples/ui_file_app/)

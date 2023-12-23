@@ -12,4 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = "1.0.0"
+from setuptools import find_packages, setup
+
+from pyside_setup_macro import QtBuildPackage
+import scandinavian_flag_picker
+
+
+setup(
+    name="scandinavian_flag_picker",
+    version=scandinavian_flag_picker.__version__,
+    packages=find_packages(exclude=("test*", "tests*")),
+    url="",
+    license="Apache License, Version 2.0",
+    author="Max Wiklund",
+    author_email="",
+    description="Demo project",
+    cmdclass={
+        "build_py": QtBuildPackage,
+    },
+)

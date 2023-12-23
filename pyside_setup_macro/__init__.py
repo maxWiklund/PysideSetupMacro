@@ -1,3 +1,17 @@
+# Copyright (C) 2023  Max Wiklund
+#
+# Licensed under the Apache License, Version 2.0 (the “License”);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an “AS IS” BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import shutil
 from setuptools.command.build_py import build_py
@@ -7,38 +21,74 @@ __version__ = "0.1.0"
 
 
 def _create_build_dir(path: str) -> None:
-    if os.path.exists(path):
-        shutil.rmtree(path)
-    os.makedirs(path)
+    """Create build directory path.
+
+    Args:
+        path: Directory path to create.
+
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
 class QtBuildPackage(build_py):
-    def compile_resource_files(self):
+    """Build class that can compile qt files."""
+
+    def _compile_and_move_qt_files(self) -> None:
+        """Compile qt files and move them to build dir."""
+        if os.path.exists(self.build_lib):
+            print("Build dir exists")
+            shutil.rmtree(self.build_lib)
+
         package_root = "."
+        # Travers source code and compile any qt file.
         for package in self.packages:
             for root, _, files in os.walk(package):
                 for file in files:
-                    destination_dir = os.path.join(self.build_lib, os.path.relpath(root, package_root))
+                    destination_dir = os.path.join(
+                        self.build_lib, os.path.relpath(root, package_root)
+                    )
                     source_path = os.path.join(root, file)
                     if source_path.endswith(".qrc"):
                         # A Qt Resource file has been found. it needs to be compiled and moved to build dir.
-                        self.convert_qrc(source_path, destination_dir, file)
+                        self._convert_qrc(source_path, destination_dir, file)
                     elif source_path.endswith(".ui"):
                         self._convert_ui_files(source_path, destination_dir, file)
                     elif file == "qmacro":
                         _create_build_dir(destination_dir)
-                        _qmacro.create_and_compile_qresource(source_path, destination_dir)
+                        _qmacro.create_and_compile_qresource(
+                            source_path, destination_dir
+                        )
 
-    def convert_qrc(self, source_path: str, destination_dir: str, file: str):
+    def _convert_qrc(self, source_path: str, destination_dir: str, file: str) -> None:
+        """Compile qresource file.
+
+        Args:
+            source_path: Source qresource file to compile.
+            destination_dir: Build directory to put compiled python module in.
+            file: File name of qresource.
+
+        """
         _create_build_dir(destination_dir)
         resource_name = file.replace(".qrc", ".py")
         _qt.compile_qresource(source_path, os.path.join(destination_dir, resource_name))
 
-    def _convert_ui_files(self, source_path: str, destination_dir: str, file: str) -> None:
+    def _convert_ui_files(
+        self, source_path: str, destination_dir: str, file: str
+    ) -> None:
+        """Compile .ui file.
+
+        Args:
+            source_path: Source ui. file to compile.
+            destination_dir: Build directory to put compiled python module in.
+            file: File name of .ui file.
+
+        """
         _create_build_dir(destination_dir)
         resource_name = file.replace(".ui", ".py")
-        _qt.convert_ui_file(source_path, os.path.join(destination_dir, resource_name))
+        _qt.compile_ui_file(source_path, os.path.join(destination_dir, resource_name))
 
     def run(self) -> None:
-        self.compile_resource_files()
-        super().run()
+        """Convert qt files and build python package."""
+        self._compile_and_move_qt_files()
+        super().run()  # Run normal installation.

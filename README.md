@@ -12,13 +12,12 @@ All you have to do is to import the module in your `setup.py` and use it.
 
 from setuptools import find_packages, setup
 
-from pyside_setup_macro import QtBuildPackage
+from pyside_setup_macro import QtBuildPackage, QtBuildDevelop
+
 
 setup(
     ...,
-    cmdclass={
-        "build_py": QtBuildPackage,  # This is all you need to add.
-    },
+    cmdclass={"build_py": QtBuildPackage, "develop": QtBuildDevelop},  # This is all you need to add.
 )
 ```
 

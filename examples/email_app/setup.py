@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-from pyside_setup_macro import QtBuildPackage
+from pyside_setup_macro import QtBuildPackage, QtBuildDevelop
 import email_app
 
 
@@ -13,7 +13,6 @@ setup(
     author="Max Wiklund",
     author_email="",
     description="Demo project",
-    cmdclass={
-        "build_py": QtBuildPackage,
-    },
+    cmdclass={"build_py": QtBuildPackage, "develop": QtBuildDevelop},
+    install_requires=["PySide6"],
 )

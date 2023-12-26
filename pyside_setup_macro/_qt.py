@@ -16,16 +16,26 @@ import os
 import sys
 import subprocess
 
-try:
-    import PySide6 as pyside
-except ImportError:
+
+def get_qt_root() -> str:
+    """Get root dir of PySide install.
+
+    Returns:
+        Latest available Pyside package root.
+
+    Raises:
+        ModuleNotFoundError: No PySide module found.
+
+    """
     try:
-        import PySide2 as pyside
+        import PySide6 as pyside
     except ImportError:
-        raise ModuleNotFoundError("No PySide module found!")
+        try:
+            import PySide2 as pyside
+        except ImportError:
+            raise ModuleNotFoundError("No PySide module found!")
 
-
-QT_ROOT = os.path.dirname(pyside.__file__)
+    return os.path.dirname(pyside.__file__)
 
 
 def get_app(qt_tool: str) -> str:
@@ -39,8 +49,8 @@ def get_app(qt_tool: str) -> str:
 
     """
     if sys.platform != "win32":
-        return os.path.join(QT_ROOT, "Qt", "libexec", qt_tool)
-    return os.path.join(QT_ROOT, qt_tool)
+        return os.path.join(get_qt_root(), "Qt", "libexec", qt_tool)
+    return os.path.join(get_qt_root(), qt_tool)
 
 
 def compile_qresource(source: str, destination: str) -> None:

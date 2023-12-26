@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import List
-import glob
-
 from xml.dom import minidom
-import xml.etree.ElementTree as ET
+import glob
 import os
 import re
+import xml.etree.ElementTree as ET
 
 from pyside_setup_macro._qt import compile_qresource
 

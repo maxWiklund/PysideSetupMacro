@@ -15,9 +15,10 @@
 import os
 import shutil
 from setuptools.command.build_py import build_py
+from setuptools.command.develop import develop
 from pyside_setup_macro import _qmacro, _qt
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 def _create_build_dir(path: str) -> None:
@@ -31,64 +32,90 @@ def _create_build_dir(path: str) -> None:
         os.makedirs(path)
 
 
+def _file_needs_processing(file_name: str) -> bool:
+    return file_name == "qmacro" or file_name.endswith((".qrc", ".ui"))
+
+
+def _convert_qrc(source_path: str, destination_dir: str, file: str) -> None:
+    """Compile qresource file.
+
+    Args:
+        source_path: Source qresource file to compile.
+        destination_dir: Build directory to put compiled python module in.
+        file: File name of qresource.
+
+    """
+    resource_name = file.replace(".qrc", ".py")
+    _qt.compile_qresource(source_path, os.path.join(destination_dir, resource_name))
+
+
+def _convert_ui_files(source_path: str, destination_dir: str, file: str) -> None:
+    """Compile .ui file.
+
+    Args:
+        source_path: Source ui. file to compile.
+        destination_dir: Build directory to put compiled python module in.
+        file: File name of .ui file.
+
+    """
+    resource_name = file.replace(".ui", ".py")
+    _qt.compile_ui_file(source_path, os.path.join(destination_dir, resource_name))
+
+
+def _compile_file(source_path, destination_dir, file) -> None:
+    if source_path.endswith(".qrc"):
+        # A Qt Resource file has been found. it needs to be compiled and moved to build dir.
+        _convert_qrc(source_path, destination_dir, file)
+    elif source_path.endswith(".ui"):
+        _convert_ui_files(source_path, destination_dir, file)
+    elif file == "qmacro":
+        _qmacro.create_and_compile_qresource(source_path, destination_dir)
+
+
 class QtBuildPackage(build_py):
     """Build class that can compile qt files."""
 
     def _compile_and_move_qt_files(self) -> None:
         """Compile qt files and move them to build dir."""
         if os.path.exists(self.build_lib):
-            print("Build dir exists")
             shutil.rmtree(self.build_lib)
 
-        package_root = "."
+        root_packages = {
+            path.split(os.path.sep).pop(0) for path in self.get_source_files()
+        }
+
+        package_root = self.package_dir.get("", ".")
         # Travers source code and compile any qt file.
-        for package in self.packages:
+        for package in root_packages:
             for root, _, files in os.walk(package):
                 for file in files:
                     destination_dir = os.path.join(
                         self.build_lib, os.path.relpath(root, package_root)
                     )
                     source_path = os.path.join(root, file)
-                    if source_path.endswith(".qrc"):
-                        # A Qt Resource file has been found. it needs to be compiled and moved to build dir.
-                        self._convert_qrc(source_path, destination_dir, file)
-                    elif source_path.endswith(".ui"):
-                        self._convert_ui_files(source_path, destination_dir, file)
-                    elif file == "qmacro":
+                    if _file_needs_processing(file):
                         _create_build_dir(destination_dir)
-                        _qmacro.create_and_compile_qresource(
-                            source_path, destination_dir
-                        )
-
-    def _convert_qrc(self, source_path: str, destination_dir: str, file: str) -> None:
-        """Compile qresource file.
-
-        Args:
-            source_path: Source qresource file to compile.
-            destination_dir: Build directory to put compiled python module in.
-            file: File name of qresource.
-
-        """
-        _create_build_dir(destination_dir)
-        resource_name = file.replace(".qrc", ".py")
-        _qt.compile_qresource(source_path, os.path.join(destination_dir, resource_name))
-
-    def _convert_ui_files(
-        self, source_path: str, destination_dir: str, file: str
-    ) -> None:
-        """Compile .ui file.
-
-        Args:
-            source_path: Source ui. file to compile.
-            destination_dir: Build directory to put compiled python module in.
-            file: File name of .ui file.
-
-        """
-        _create_build_dir(destination_dir)
-        resource_name = file.replace(".ui", ".py")
-        _qt.compile_ui_file(source_path, os.path.join(destination_dir, resource_name))
+                        _compile_file(source_path, destination_dir, file)
 
     def run(self) -> None:
         """Convert qt files and build python package."""
         self._compile_and_move_qt_files()
         super().run()  # Run normal installation.
+
+
+class QtBuildDevelop(develop):
+    """Build class that can compile qt files in dev-mode."""
+
+    def _compile(self) -> None:
+        """Compile qt files in dev-mode"""
+
+        # Travers source code and compile any qt file in package.
+        for root, _, files in os.walk(self.dist.module_path):
+            for file in files:
+                if _file_needs_processing(file):
+                    _compile_file(os.path.join(root, file), root, file)
+
+    def run(self) -> None:
+        """Convert qt files locally and configure package in dev-mode."""
+        self._compile()
+        super().run()

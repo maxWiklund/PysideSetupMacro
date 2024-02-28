@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 from pyside_setup_macro._qt import compile_qresource
 
 
-_SUPPORTED_FILE_EXT = (".exr", ".png", ".jpeg", ".tiff", ".svg", ".gif")
+_SUPPORTED_FILE_EXT = (".exr", ".png", ".jpeg", ".tiff", ".svg", ".gif", ".ttf")
 _FILE_NAME_RE = re.compile(r"^[a-zA-Z_][\w_]+$")
 
 

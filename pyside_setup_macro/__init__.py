@@ -72,6 +72,21 @@ def _compile_file(source_path, destination_dir, file) -> None:
         _qmacro.create_and_compile_qresource(source_path, destination_dir)
 
 
+def compile_qt_files(root_dir) -> None:
+    """Compile qt files in director
+
+    Args:
+        root_dir: Root dir to find file in.
+
+
+    """
+    # Travers source code and compile any qt file in package.
+    for root, _, files in os.walk(root_dir):
+        for file in files:
+            if _file_needs_processing(file):
+                _compile_file(os.path.join(root, file), root, file)
+
+
 class QtBuildPackage(build_py):
     """Build class that can compile qt files."""
 
@@ -106,16 +121,7 @@ class QtBuildPackage(build_py):
 class QtBuildDevelop(develop):
     """Build class that can compile qt files in dev-mode."""
 
-    def _compile(self) -> None:
-        """Compile qt files in dev-mode"""
-
-        # Travers source code and compile any qt file in package.
-        for root, _, files in os.walk(self.dist.module_path):
-            for file in files:
-                if _file_needs_processing(file):
-                    _compile_file(os.path.join(root, file), root, file)
-
     def run(self) -> None:
         """Convert qt files locally and configure package in dev-mode."""
-        self._compile()
+        compile_qt_files(self.dist.module_path)
         super().run()

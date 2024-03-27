@@ -48,7 +48,7 @@ def get_app(qt_tool: str) -> str:
         Path to qt app.
 
     """
-    if sys.platform != "win32":
+    if sys.platform == "darwin":
         return os.path.join(get_qt_root(), "Qt", "libexec", qt_tool)
     return os.path.join(get_qt_root(), qt_tool)
 

@@ -106,7 +106,7 @@ def create_and_compile_qresource(source_file: str, build_dir: str) -> None:
         "add_files": target_cls.add_files,
         "walk": target_cls.walk,
     }
-    with open(source_file) as f:
+    with open(source_file, encoding="utf8") as f:
         exec(f.read(), _target_data)
         name = _target_data.get("name")
         if not name:
